@@ -36,7 +36,7 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <p className="text-sm text-muted-foreground">Sunday, September 6, 2026</p>
+            <p className="text-sm text-muted-foreground">Monday, 14th September</p>
 
             <h1 className="mt-1 text-3xl font-bold tracking-tight">Good afternoon 👋</h1>
 
