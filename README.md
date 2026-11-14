@@ -32,6 +32,7 @@ disha/
 │   ├── src/services/         Business logic, recommendations and deployments
 │   ├── src/utils/            Haversine distance, auth tokens and helpers
 │   └── src/app.test.ts       Backend integration tests
+├── WORKFLOW.md               Current citizen and officer journey after onboarding
 ├── AGENTS.md                 Product specification and implementation guide
 └── README.md
 ```
@@ -43,7 +44,7 @@ disha/
   react-leaflet.
 - **Backend:** Node.js, Express 5, TypeScript, MongoDB, Mongoose, Zod, bcryptjs,
   JWT in an HTTP-only cookie, Helmet, CORS, express-rate-limit, multer and
-  Cloudinary (optional image hosting).
+  Cloudinary image hosting with a local-disk fallback.
 - **Maps:** OpenStreetMap tiles through Leaflet. Distances are straight-line
   Haversine estimates, never road distance or travel time.
 
@@ -173,6 +174,9 @@ values stop the server with a readable error.
 
 ## Core workflow
 
+For the full screen-by-screen citizen and officer journey, see
+[`WORKFLOW.md`](WORKFLOW.md).
+
 Canonical incident statuses:
 
 1. `submitted` — citizen submitted the report.
@@ -198,7 +202,8 @@ For a verified incident, the backend:
 2. Keeps only resources whose capabilities include the incident category.
 3. Calculates straight-line distance with Haversine when incident coordinates
    exist.
-4. Ranks eligible resources by capability match, then distance.
+4. Ranks eligible resources by straight-line distance, then resource code as a
+   deterministic tie-breaker.
 5. Returns a ranked list with distance and a short explanation.
 6. Requires the officer to confirm a deployment; availability is re-checked at
    confirmation time.
