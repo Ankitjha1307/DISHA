@@ -1,201 +1,520 @@
-DISHA — Project Instructions for OpenCode
-1. Project identity
-Project name: DISHA
-Full form: Disaster Intelligence System for Humanitarian Assistance
-Project type: 5th-semester engineering mini/minor project
-Initial release: DISHA v0.1
-Primary audience: Citizens in a Greater Noida mock/demo environment
-Project mode: Frontend-first academic prototype using mock data; no backend in the initial scope.
+This file is the working product specification and implementation guide for DISHA. Read it before making changes. Inspect the current repository before editing. Keep the project at a realistic 5th-semester engineering mini-project scope; do not silently expand it into a production emergency-management platform.
 
-DISHA is a citizen-facing disaster incident reporting and assistance-awareness prototype. It should demonstrate how a citizen can report an incident, provide its location and optional photo evidence, review their submitted reports, and find basic safety information. The product should feel like a credible, polished civic/emergency-assistance service—not a generic admin template or a static college assignment.
+1. Project identity and purpose
+- Name: DISHA — Disaster Intelligence System for Humanitarian Assistance.
+- Type: B.Tech 5th-semester mini/minor project.
+- Demo geography: Greater Noida, Uttar Pradesh (simulated environment).
+- Users: Citizens and authorized response officers.
+- Purpose: Demonstrate a complete but limited citizen-to-officer incident reporting and response-coordination workflow.
+A citizen submits an incident with category, description, location and optional photo. An officer reviews and verifies or rejects it. Verified incidents appear on an officer map. DISHA recommends eligible available demo resources using simple explainable rules. The officer manually confirms a deployment and updates the incident. The citizen can track the report.
 
-The core citizen journey is:
+DISHA is an academic decision-support prototype, not an emergency dispatch service. It does not contact authorities, automatically dispatch real vehicles, guarantee assistance or replace official emergency channels. Clearly label simulated data and workflows.
+2. Mini-project scope
+Required
+1. Public landing page.
+2. Citizen registration, login and logout.
+3. Officer login using a pre-created/seeded officer account; no public officer registration.
+4. Server-enforced authentication and role-based access control (RBAC).
+5. Citizen dashboard.
+6. Incident reporting with validation, optional image and location capture/manual fallback.
+7. Persistent incident records in MongoDB.
+8. Citizen My Reports and report details, restricted to the signed-in citizen's records.
+9. Officer dashboard with operational KPIs and pending incident queue.
+10. Officer review, verification and rejection.
+11. Officer incident map using demo geography.
+12. Small resource inventory with type, capabilities, location and availability.
+13. Explainable, rule-based recommendations for a verified incident.
+14. Officer-controlled deployment confirmation and status updates.
+15. Citizen-visible report status tracking.
+16. Basic safety guidance and emergency contact information verified from authoritative sources before being called official.
+17. Responsive UI, light theme by default, dark theme support, accessible forms, loading/error/empty states.
+Explicitly out of scope
+Do not implement unless the user explicitly changes scope:
+- AI/ML disaster prediction, damage detection or severity prediction.
+- Satellite imagery, remote sensing, drones or computer vision.
+- Live emergency feeds, government-system integrations or real emergency-service notifications.
+- Automatic dispatch or autonomous decisions.
+- Real-time ambulance/personnel GPS tracking.
+- Road routing, shortest-path solvers or OR-Tools.
+- Microservices, Kubernetes, Redis, Kafka or event streaming.
+- Complex organization hierarchies or elaborate permission engines.
+- Chat, social feeds, call-centre systems or payments.
+- Production-grade high-availability infrastructure or compliance claims.
+- Analytics beyond useful counts and simple charts.
+Prefer one reliable end-to-end vertical slice over many incomplete features.
+3. Roles and permissions
+There are exactly two roles: citizen and officer.
+Citizen may
+- Register, log in and log out.
+- View the citizen dashboard.
+- Submit incident reports with optional image and location.
+- View only their own reports and report details.
+- Track officer-updated status.
+- Access safety guidance and emergency information.
+- Edit only explicitly supported profile fields, if implemented.
+Citizen may not view all reports, access officer pages, verify/reject incidents, manage resources, confirm deployments or change their own role.
+Officer may
+- Log in using a seeded/pre-created account.
+- View the officer dashboard and incident queue.
+- Review incident details and evidence.
+- Verify or reject reports.
+- Set/update operational severity and permitted statuses.
+- View incidents on the officer map.
+- View/update demo resource availability.
+- Request and inspect resource recommendations.
+- Manually confirm/cancel deployments and update incident progress.
+Officer accounts must not be created through public registration. Do not implement self-service role promotion.
+Backend-enforced RBAC is mandatory
+Hiding UI links is not security. Every protected API endpoint must authenticate the user and enforce the role on the server. Enforce record ownership so a citizen cannot read another citizen's incident by changing an ID.
 
-Discover DISHA → open the citizen portal → report an incident → receive a confirmation and report ID → view the report and its simulated status → access safety resources.
+Use simple middleware:
+- authenticate: validate session/token and attach trusted user identity and role.
+- authorize("officer"): protect officer-only endpoints.
+- Ownership checks: citizen reads are restricted to their own records.
+Never trust a browser-supplied role, user ID, reporter ID, status, severity or deployment decision where the server must determine it.
+4. Explicit technology stack
+Use the following stack unless the user explicitly approves a change. Inspect existing dependencies first; do not install everything in one step.
+Frontend
+- Next.js 16.3.4 — App Router.
+- React 19.2.8 and React DOM 19.2.8.
+- TypeScript ^5.
+- Tailwind CSS ^4 with @tailwindcss/postcss.
+- shadcn/ui, existing radix-nova style.
+- Radix UI primitives via existing radix-ui.
+- lucide-react for icons.
+- next-themes for light/dark theme.
+- sonner for toast notifications.
+- class-variance-authority, existing cn utility/package and tw-animate-css.
+- Zod for client/shared validation where useful; server validation remains authoritative.
+- React Hook Form is optional; use only if form complexity justifies it.
+Backend
+- Node.js runtime.
+- Express.js REST API.
+- TypeScript.
+- MongoDB database.
+- Mongoose ODM.
+- Zod request validation.
+- bcryptjs (or bcrypt if environment compatibility is confirmed) for password hashing.
+- jsonwebtoken if using JWT-based sessions.
+- cookie-parser for auth cookies.
+- cors with exact configured frontend origin and credentials.
+- helmet for HTTP security headers.
+- express-rate-limit for login/register and other sensitive endpoints.
+- multer for multipart image uploads when needed.
+- Cloudinary optional for hosted image storage. Do not store large image binaries in MongoDB.
+Maps and geospatial utilities
+- Leaflet and react-leaflet for interactive maps.
+- OpenStreetMap tiles, subject to provider usage policy.
+- Haversine distance calculation for straight-line distance estimates. Implement a small tested utility; do not add a routing engine.
+- Never present straight-line distance as road distance or travel time.
+Development/deployment
+- npm (unless the repository already uses another package manager).
+- ESLint.
+- Git/GitHub.
+- Vercel for Next.js frontend.
+- Render for Express API.
+- MongoDB Atlas for hosted MongoDB.
+- Cloudinary optional for image storage.
+Confirm compatibility with current Next.js/React versions before installing packages. Prefer existing dependencies and small additions.
+5. Repository architecture
+Do not recreate the existing Next.js app. Suggested organization:
+disha/
+├── src/
+│   ├── app/
+│   ├── components/
+│   │   ├── ui/
+│   │   ├── landing/
+│   │   ├── citizen/
+│   │   ├── officer/
+│   │   └── shared/
+│   ├── lib/
+│   ├── hooks/
+│   └── types/
+├── server/
+│   └── src/
+│       ├── config/
+│       ├── middleware/
+│       ├── models/
+│       ├── routes/
+│       ├── controllers/
+│       ├── services/
+│       ├── validators/
+│       ├── utils/
+│       └── app.ts
+├── public/
+├── .env.example
+├── package.json
+└── AGENTS.md
+This is guidance, not permission to move existing files unnecessarily. First inspect whether the app uses src/app or app; follow actual conventions. Keep the backend in a simple server/ directory if appropriate. Do not introduce a complicated monorepo toolchain.
+Frontend/backend boundary
+- Browser calls Express through a small typed API client.
+- Use one API base URL, e.g. NEXT_PUBLIC_API_URL.
+- Never put DB credentials, JWT secrets, Cloudinary secrets or private config in NEXT_PUBLIC_*.
+- Configure CORS for the exact frontend origin, not *, when using credentialed cookies.
+- Keep API error responses consistent.
+- Backend is authoritative for authorization, ownership, status transitions and deployments.
+6. Authentication and session security
+- Citizen registration requires name, email and password.
+- Normalize email and enforce a unique index.
+- Hash passwords with bcrypt/bcryptjs. Never store plaintext passwords.
+- Officer accounts are created through a seed script or controlled development process, not public registration.
+- Login validates credentials server-side.
+- Use a signed JWT in an HTTP-only cookie, Secure in production, with appropriate SameSite/domain/path settings. Do not store auth tokens in localStorage.
+- Logout clears the cookie.
+- Add rate limiting to authentication routes.
+- Do not log passwords, tokens, cookies or secrets.
+- Validate required environment variables at server startup.
+- Seed officer credentials through environment variables or a seed script. Never commit a real password. Document local demo setup with placeholders or development-only credentials.
+- For cross-site cookie deployment, document SameSite=None; Secure and CSRF implications. Prefer a same-site deployment arrangement when feasible.
+- For cookie-authenticated state-changing routes, implement an appropriate CSRF strategy; at minimum validate request Origin/Referer for browser requests where appropriate. Do not claim security controls that are not implemented.
+7. Data models and lifecycle
+Keep schemas small.
+User
+- name
+- email (unique, normalized)
+- passwordHash
+- role: citizen | officer
+- timestamps
+Incident
+- reportId — collision-safe human-readable ID, e.g. DSH-2026-0001.
+- reporterId — User reference.
+- category: fire | road_accident | flooding | building_damage | medical_emergency | other.
+- description
+- location: label/address plus latitude and longitude when available.
+- imageUrl — optional.
+- severity — officer-assigned/updated; never blindly trust citizen severity.
+- status
+- officerNotes — internal; do not expose to citizens.
+- timestamps
+Resource
+- resourceCode or name.
+- type: ambulance, fire unit, rescue team or shelter.
+- capabilities: supported incident categories.
+- location: latitude, longitude and base label.
+- availability: available | deployed | unavailable.
+- timestamps
+Use a small seeded Greater Noida demo inventory. This is not a live fleet.
+Deployment
+- incidentId
+- resourceId
+- assignedBy (officer ID)
+- status: assigned | completed | cancelled
+- timestamps
+- optional short notes
+Prevent a resource from being assigned to multiple active deployments. Update resource availability and incident status consistently.
+Canonical incident status
+Use the same enum across backend, frontend, filters, badges and tests:
+1. submitted — citizen submitted the report.
+2. under_review — officer started reviewing.
+3. verified — officer accepted it for response.
+4. dispatched — officer confirmed a demo resource deployment.
+5. resolved — officer marked the incident addressed.
+6. rejected — officer rejected the report.
+Allowed basic transitions:
+- Citizen creates: submitted.
+- Officer begins review: under_review.
+- Officer verifies: verified.
+- Officer confirms deployment: dispatched.
+- Officer resolves: resolved.
+- Officer rejects during review: rejected.
+Enforce transitions in backend services. Citizens cannot set officer-only statuses. Do not expose an unrestricted status update endpoint. Define deliberate behavior for cancelled deployments so incident/resource states do not become inconsistent.
+8. Resource recommendation logic
+This is a core differentiator but must remain deterministic, explainable and small. It is not AI.
 
-The project must not imply that a real emergency service has received a report or dispatched help. The current prototype is simulated and is not an emergency dispatch service.
-2. Scope and product boundaries
-In scope for the initial prototype
-1. A polished public landing page.
-2. A citizen home dashboard.
-3. An incident-reporting form.
-4. Client-side image selection/capture preview.
-5. Location entry using a manual location/map-pin interaction or browser geolocation when available and permitted. Provide a manual fallback if permission is denied or geolocation is unavailable.
-6. A clear successful-submission toast and confirmation view with a demo report ID.
-7. A “My Reports” page with mock report history, filters and status labels.
-8. A citizen-facing incident map/area view if it can be implemented reliably within the mini-project scope. Clearly distinguish illustrative/mock data from live information.
-9. Safety guidelines and verified emergency contact information. Do not invent official contact details; source and verify them before presenting them as official.
-10. Profile/settings UI only to the extent useful for the prototype; do not build real authentication unless explicitly requested.
-11. Responsive design, accessible interactions, light theme by default and dark theme support.
-12. Toasts, empty states, validation, loading/disabled states and helpful error messages.
-Not in the initial scope unless explicitly requested later
-- A production backend, database, authentication, authorization or real user accounts.
-- Real dispatch, contact with emergency services, or claims that authorities have been notified.
-- A full officer/admin command centre as the main experience. The citizen portal is the immediate priority. An officer view can be considered as a separate later milestone if the project requirements demand it.
-- AI/ML disaster prediction, automated damage assessment, satellite imagery analysis, chatbots, microservices, Redis, Kubernetes, or optimization solvers.
-- Live vehicle tracking, real-time emergency feeds, or guaranteed resource availability.
-- Complex production infrastructure that does not help demonstrate the mini-project's core flow.
-Keep the scope achievable. Prefer a small, coherent, working vertical slice over many incomplete screens.
-3. Technology stack already present
-Use the existing project and dependencies. Do not recreate the app from scratch or replace the stack without a strong reason.
-- Next.js 16.3.4, App Router
-- React and React DOM 19.2.8
-- TypeScript ^5
-- Tailwind CSS ^4 using @tailwindcss/postcss
-- shadcn/ui configured with the radix-nova style
-- Radix UI primitives via the existing radix-ui dependency
-- lucide-react for icons
-- next-themes for theme support
-- sonner for toast notifications
-- class-variance-authority, existing cn package, and tw-animate-css
-The existing package.json scripts are:
-- npm run dev
-- npm run build
-- npm run start
-- npm run lint
-The repository's components.json specifies src/app/globals.css, with aliases such as @/components, @/components/ui, @/lib, and @/hooks. Inspect the actual folder structure before editing; the files may live under src/app/ rather than app/.
-4. Existing codebase context
-The user supplied these existing files/configuration details:
-- The current home page (page.tsx) redirects / to /dashboard using redirect("/dashboard"). The intended next step is to replace that redirect with the public landing page, while keeping /dashboard as the citizen portal route.
-- The root layout loads Geist and Geist Mono through next/font/google, imports globals.css, defines DISHA metadata and renders the Sonner toaster from @/components/ui/sonner.
-- globals.css imports tailwindcss, tw-animate-css, and shadcn/tailwind.css. It defines light/dark CSS variables and shadcn design tokens. Preserve the token system and extend it carefully rather than replacing the stylesheet wholesale.
-- components.json uses radix-nova, RSC enabled, TSX enabled, Lucide icons, CSS variables, and the @/ aliases.
-- The package list does not currently include a map library, Framer Motion, or separate Aceternity/Magic UI packages. Check before installing anything because package contents can change.
-Before substantial changes, inspect the actual repository structure, relevant files, current components, and installed packages. Do not assume a component or route exists without checking.
-5. Visual design direction
-The interface should look like a polished, contemporary civic-tech/SaaS product. Avoid the generic “college project dashboard” appearance.
-Brand and visual language
-- Brand: DISHA.
-- Meaning: Disaster Intelligence System for Humanitarian Assistance.
-- Primary palette: confident blue with navy/deep-slate text, white and cool off-white surfaces, subtle cyan accents, and restrained severity colours.
-- Default appearance: light theme.
-- Dark theme: supported and visually consistent, not an afterthought.
-- Typography: use the existing Geist font setup unless a change has a clear benefit.
-- Use generous whitespace, a clear type scale, strong alignment, restrained borders, rounded corners, layered surfaces and subtle shadows.
-- Use gradients and blurred ambient glows selectively. Maintain contrast and legibility.
-- Use consistent design tokens and reusable components; avoid scattering arbitrary hex colours throughout every page when a token is appropriate.
-Visual quality
-Use high-quality hero compositions, thoughtful empty states, polished cards, clear navigation, micro-interactions, responsive layouts and subtle transitions. 21st.dev, Aceternity UI and Magic UI may be used as sources of inspiration or copied components where suitable, but they are not mandatory dependencies. Prefer adapting small, understandable components over adding a large library for one effect.
+For a verified incident:
+1. Find resources with availability = available.
+2. Filter resources whose capabilities support the incident category.
+3. Calculate straight-line distance from incident coordinates using Haversine.
+4. Rank eligible resources by a transparent rule considering distance and capability match. Document the rule.
+5. Return a small ranked list with distance and a concise explanation.
+6. Let the officer choose and confirm.
+Rules:
+- If incident coordinates are missing, say proximity ranking is unavailable and list eligible resources without inventing distance.
+- If no eligible resource is available, show a clear empty state.
+- Never claim road ETA, route optimization or live availability.
+- Officer must explicitly confirm deployment.
+- Backend must re-check availability at confirmation time to prevent duplicate assignments.
+- Keep recommendation logic in a backend service and unit-test it.
+9. Citizen routes and experience
+Citizen experience is the primary public-facing product: calm, simple and mobile-first.
+Public /
+- Real landing page, not a redirect to dashboard.
+- DISHA branding/navigation.
+- Strong hero headline such as “When every second matters.”
+- Concise explanation of incident reporting and assistance awareness.
+- Primary CTA to enter citizen portal; secondary CTA to explore features.
+- Illustrative map/incident visual labelled as illustrative.
+- Feature cards: report incidents, location awareness, track reports.
+- Safety/preparedness callout and footer.
+- Never present demo counts as live regional statistics.
+Authentication
+- /login
+- /register for citizens only
+- Clear validation and error messages.
+- No public officer registration.
+- After login, route according to server-verified role.
+- Client route guards improve UX but are not the security boundary.
+Citizen routes
+- /dashboard
+- /report-incident
+- /my-reports
+- /my-reports/[id] or equivalent detail view
+- /safety
+- /profile only if useful
+Citizen dashboard:
+- Greeting and short explanation.
+- Prominent Report an Incident CTA.
+- Personal report counts derived from API records.
+- Recent personal reports with ID, category, location, date and status.
+- Safety shortcuts.
+- First-use empty state.
+- Do not show district-wide officer KPIs or fleet availability.
+Incident form
+- Category selection.
+- Description with client and server validation.
+- Location: browser geolocation only after explicit action/permission; manual fallback.
+- Optional image with preview, type/size validation and remove/change.
+- Review/submit and loading/disabled feedback.
+- Confirmation with generated report ID.
+- Clearly explain that this prototype does not notify emergency services.
+My Reports
+- Only authenticated citizen's own records.
+- Useful search/filter by category/status.
+- Detail: ID, category, description, location, date, optional image and status.
+- Do not expose internal officer notes.
+- Dashboard counts must use the same underlying API data.
+10. Officer routes and experience
+Officer interface is a separate protected area, not the public landing page.
 
-Animations must be purposeful, performant and respectful of prefers-reduced-motion. Do not animate every card or add effects that distract from incident reporting. Never sacrifice readability or task completion for decoration.
-Landing page
-The public route / should be a real landing page, not a redirect. The intended first-pass design includes:
-- Navigation with DISHA branding and links to About, Features and Safety Resources.
-- A strong hero headline along the lines of “When every second matters.”
-- A concise description of citizen incident reporting and assistance awareness.
-- A primary CTA to enter the citizen portal and a secondary CTA to explore features.
-- A custom illustrative incident-map visual or polished visual panel. Clearly label it illustrative; do not imply it shows live incidents.
-- Feature cards for incident reporting, location awareness and report tracking.
-- A safety/preparedness callout and a simple footer.
-- Responsive navigation and mobile-friendly CTA layout.
-If implementing the initial hero supplied in conversation, preserve its core idea but verify imports, syntax, lint and build. Do not assume copied JSX is error-free.
-6. Citizen portal information architecture
-The main citizen-facing routes/pages should be built in this order:
-A. /dashboard — Citizen Home
-Include:
-- A welcoming header and a short explanation of what the citizen can do.
-- A prominent “Report an Incident” action.
-- Small personal activity summaries, such as total reports, under review and resolved. These must be derived from demo records, not hard-coded separately from the report list.
-- Recent reports with category, short location, report ID, date/time and status.
-- Quick access to safety guidelines and emergency contact information.
-- Optional map/area preview if it adds value without overcrowding the page.
-- Helpful first-use/empty state when the citizen has no reports.
-Do not place officer-only KPIs (such as all active incidents across a district, pending officer verification, or fleet availability) on the citizen dashboard. The citizen should see their own activity only.
-B. Incident report flow
-Use a dedicated route or a well-structured form view, not a huge form embedded in the home dashboard. The flow should include:
-1. Incident category: fire, road accident, flooding/waterlogging, building damage, medical emergency/other, with wording appropriate to a demo.
-2. Description with sensible length validation.
-3. Location: manual location text and/or map pin; browser geolocation only after user action/permission. Include a manual fallback.
-4. Optional image upload/camera capture using a file input, with preview, file type/size validation and a way to remove/change the image.
-5. Review/submit action with disabled/loading feedback while submitting.
-6. On successful local submission, create a unique demo ID, store a timestamp, set the initial status to “Submitted” or “Under review”, show a Sonner toast saying “Incident reported successfully”, and present a confirmation with the report ID.
-No actual backend upload or real emergency alert occurs. Explain that this is a prototype where appropriate, without making the main UI alarming or cluttered.
-C. /my-reports (or a route that follows existing conventions)
-Include:
-- Citizen's own mock/submitted reports.
-- Search and filters by category/status when useful.
-- Report details including ID, category, location, submitted date, description, optional image preview and current simulated status.
-- Clear status badges and an empty state.
-- Consistent data with the dashboard counts.
-D. Incident map/area view
-If included in this milestone:
-- Use a real interactive map library, such as Leaflet with OpenStreetMap tiles, rather than a static image pretending to be a map.
-- Check whether a suitable map package already exists before adding one. If not, explain the dependency and add only what is necessary.
-- Map data is mock/illustrative. Add a visible demo label and a legend.
-- Respect privacy: never expose precise citizen report locations publicly by default. Use approximate/mock locations unless the project explicitly defines a safe access model.
-- Provide a useful list or fallback view if the map cannot load.
-E. Safety resources
-- Provide concise preparedness guidance for relevant incident categories.
-- Show emergency numbers only after verifying them from authoritative sources. Do not invent official contacts or claim that DISHA directly calls them.
-- Make any call links usable on mobile (tel:) and clearly distinguish informational resources from reporting functionality.
-F. Profile/settings
-Only implement what is useful for the demo, such as theme selection or a mock profile. Do not imply that a real identity is authenticated or secured if no auth system exists.
-7. Mock-data and frontend architecture
-Keep demo data consistent, typed and separate from page presentation.
-- Define TypeScript types for incidents/reports, incident category and report status.
-- Keep seed/mock records in a dedicated module, for example src/lib/mock-data.ts, adjusted to the real repository structure.
-- Put shared report operations in a small client-side data/service module rather than duplicating business logic in each page.
-- For local persistence, localStorage is acceptable for a frontend demo, but only access it in client-side code/effects or guarded browser-only helpers. Avoid accessing browser globals in Server Components or during server rendering.
-- If local storage is used, seed demo records carefully, handle invalid/missing values and keep dashboard summaries in sync with the same source of records.
-- Do not create an elaborate state-management layer for a small prototype. React state and a small context/store are enough if shared state requires it.
-- Use Server Components by default. Add "use client" only where interactivity/browser APIs require it.
-- Keep route pages thin; extract reusable components when they improve clarity.
-- Avoid fake API calls, arbitrary delays, or mock “success” messages that suggest a server accepted a report.
-8. Component and UI-library guidance
-- Reuse the existing shadcn components if they are present. Inspect src/components/ui (or the equivalent) before importing components.
-- Use Lucide icons consistently; do not mix emoji icons with the main interface.
-- Use Sonner for concise action feedback, and ensure important confirmation details are also visible in the page rather than only in a toast.
-- Use semantic HTML and proper form labels. Every input needs an accessible label; icon-only buttons need accessible names.
-- Buttons should be real buttons; navigation should use Next.js Link where appropriate.
-- Provide keyboard focus styles, good contrast, validation messages and reduced-motion support.
-- Use 21st.dev/Aceternity/Magic UI components selectively. Copy and adapt the necessary code into the repository; do not assume those sites are runtime dependencies or install unrelated packages.
-- Avoid adding Framer Motion or other animation libraries unless a concrete requirement justifies the extra dependency.
-- Do not use a decorative map screenshot in place of a functional map if the feature is described as interactive.
-9. Code quality and implementation rules
-- TypeScript should remain strict and understandable. Avoid any unless there is a clear reason.
-- Follow the repository's current naming conventions and alias configuration.
-- Do not replace the existing globals.css, layout, or component configuration wholesale. Make small, deliberate changes and preserve shadcn tokens.
-- Do not remove Geist fonts, the Sonner toaster, theme support or existing UI components without a reason.
-- Check package versions and existing components before installing or generating new ones.
-- Avoid duplicate components, unused imports, dead code and unnecessary dependencies.
-- Handle loading, error, empty, success and disabled states for meaningful user actions.
-- Keep the UI responsive for small mobile screens, tablets and desktop.
-- Do not add secrets, API keys, credentials or personal data to source control.
-- Do not claim a feature is implemented until the relevant route and behavior exist and have been tested.
-- When editing files, preserve unrelated working code and summarize what changed.
-10. Suggested build sequence
-Implement one coherent milestone at a time:
-1. Inspect first: list the repository structure, review the existing app routes, layout, CSS, components, aliases and installed packages. Identify any mismatch between this document and the repository.
-2. Public landing page: implement / with responsive navigation, premium hero, clear CTAs, feature cards, safety callout and footer.
-3. Citizen dashboard shell: implement /dashboard with responsive navigation and a clean dashboard layout.
-4. Typed demo records: define incident/report types and a single source of mock data.
-5. Report submission: implement validation, image preview, location input, local demo submission, confirmation and toast.
-6. My Reports: show the same records, search/filter and report details.
-7. Safety resources: add well-sourced emergency contacts and guidance.
-8. Optional map: implement a real interactive map only after the core reporting flow works.
-9. Polish and verification: test mobile layouts, keyboard accessibility, theme behavior, empty states and navigation; run lint and production build.
-Do not try to implement all routes in one giant component or one huge change. After each milestone, run the relevant checks and fix errors before moving on.
-11. Verification checklist
-Before calling a milestone complete:
-- [ ] Routes load without runtime errors.
-- [ ] npm run lint passes, or any pre-existing failure is clearly identified.
-- [ ] npm run build passes, or any environment/network issue is documented accurately.
-- [ ] Landing-page CTAs lead to the intended routes/sections.
-- [ ] The citizen can complete the demo report form with valid input.
-- [ ] Invalid input and rejected/oversized files show useful errors.
-- [ ] A successful submission generates a report ID and appears in My Reports.
-- [ ] Dashboard summary counts are derived from the same report records.
-- [ ] Empty states and failed/unavailable geolocation are handled.
-- [ ] The interface works on mobile and desktop.
-- [ ] Light theme is the default and dark theme remains usable.
-- [ ] No UI claims that mock data is live or that real emergency services were notified.
-- [ ] No secret, API key or real personal data is included.
-12. Instructions for OpenCode when starting work
-Start by inspecting the current codebase; do not immediately overwrite files. Confirm whether the app uses src/app or app, identify existing UI components and check the current state of /, /dashboard, theme handling and toast setup. Then implement only the next requested milestone.
+Suggested routes:
+- /officer/dashboard
+- /officer/incidents
+- /officer/incidents/[id]
+- /officer/map
+- /officer/resources
+- /officer/deployments
+Officer dashboard
+- Active incidents.
+- Reports awaiting verification.
+- High-priority incidents.
+- Available demo resources.
+- Recent incident queue.
+- Small map preview if useful.
+KPIs must be calculated from API data, not hardcoded.
+Incident management
+- List/table: report ID, category, location, submitted time, severity and status.
+- Search/filter.
+- Detail with description, evidence and coordinates.
+- Verify/reject actions with confirmation and optional officer notes.
+- Officer-set severity: low | medium | high | critical.
+- Distinguish citizen-provided information from officer-assigned severity.
+Map
+- Leaflet/react-leaflet + OpenStreetMap tiles.
+- Demo incident and resource markers.
+- Legend and marker detail.
+- Clearly label simulated data.
+- Precise report coordinates may be available to authorized officers; never expose other citizens' precise report locations on a public map.
+- Provide a list/fallback if map or tiles fail.
+- Do not call a static screenshot an interactive map.
+Resources and deployment
+- List seeded resources, type, base location, capabilities and availability.
+- Officer may update availability.
+- No live tracking.
+- For a verified incident, request ranked recommendations.
+- Officer reviews reasons and manually confirms.
+- Backend revalidates availability and records deployment.
+- Resource becomes deployed; incident becomes dispatched.
+- Officer may complete/cancel deployment and update incident consistently.
+- Citizen sees appropriate public status only, not internal notes.
+11. Visual design system
+DISHA should look like a polished contemporary civic-tech/SaaS product, not a generic college dashboard.
+- Primary palette: confident blue.
+- Supporting: navy/deep slate, white and cool off-white.
+- Accent: subtle cyan.
+- Severity colours: restrained and consistent (red for critical/high, amber for medium, green for resolved/available).
+- Light theme by default; dark theme complete and legible.
+- Preserve existing Geist/Geist Mono unless there is a clear reason to change.
+- Generous whitespace, strong hierarchy, alignment, restrained borders, layered surfaces and subtle shadows.
+- Accessible contrast and readable type.
+Premium components and motion
+- 21st.dev, Aceternity UI and Magic UI may be sources for individual copied/adapted components; they are not assumed runtime dependencies.
+- Use a premium hero, tasteful gradients/ambient background, polished cards, micro-interactions and purposeful transitions.
+- Prefer CSS/Tailwind and existing tw-animate-css.
+- Add Framer Motion only if a concrete interaction requires it and the added dependency is justified.
+- Avoid animation overload. Citizen reporting must remain clear and fast.
+- Respect prefers-reduced-motion.
+- Never substitute decorative UI for a real map or working workflow.
+Preserve existing configuration
+Inspect and preserve:
+- src/app/globals.css (or actual location).
+- Existing shadcn CSS variables/theme tokens.
+- components.json radix-nova configuration.
+- Geist fonts.
+- Sonner toaster.
+- Existing theme support.
+Do not replace global CSS wholesale.
+12. API design
+Use REST endpoints, consistent JSON responses and validation. Follow existing conventions if already established, while retaining equivalent protection.
+Auth
+- POST /api/auth/register — citizen only.
+- POST /api/auth/login
+- POST /api/auth/logout
+- GET /api/auth/me
+Citizen
+- POST /api/incidents — authenticated citizen creates.
+- GET /api/incidents/my — own reports.
+- GET /api/incidents/my/:id — own detail with ownership check.
+- Safety content may be static frontend content or a read-only endpoint.
+Officer
+- GET /api/officer/dashboard
+- GET /api/officer/incidents
+- GET /api/officer/incidents/:id
+- PATCH /api/officer/incidents/:id/review
+- PATCH /api/officer/incidents/:id/verify
+- PATCH /api/officer/incidents/:id/reject
+- PATCH /api/officer/incidents/:id/severity
+- GET /api/officer/resources
+- PATCH /api/officer/resources/:id/availability
+- GET /api/officer/incidents/:id/recommendations
+- POST /api/officer/incidents/:id/deployments
+- PATCH /api/officer/deployments/:id
+Do not create a generic unrestricted incident update endpoint.
+13. Environment variables and deployment
+Suggested variables (adapt as needed):
 
-When responding to the user, be explicit about:
-- Which files you inspected or changed.
-- Any dependencies added and why.
-- Commands/tests actually run and their real outcomes.
-- Any feature that is still mocked, illustrative or incomplete.
-Do not silently expand scope. If a decision materially changes the product (for example, adding a backend, real authentication or live maps/data), explain the trade-off and ask before proceeding.
+Frontend:
+- NEXT_PUBLIC_API_URL
+Backend:
+- PORT
+- NODE_ENV
+- MONGODB_URI
+- JWT_SECRET if JWT is used
+- CLIENT_ORIGIN
+- COOKIE_SECRET if required
+- CLOUDINARY_CLOUD_NAME (optional)
+- CLOUDINARY_API_KEY (optional)
+- CLOUDINARY_API_SECRET (optional)
+- OFFICER_SEED_EMAIL
+- OFFICER_SEED_PASSWORD (development/demo seed only)
+Validate required variables at startup. Provide .env.example with placeholders. Never commit .env or real credentials. Do not log secret values.
+
+Target deployment, only when credentials/user approval are available:
+- Next.js frontend: Vercel.
+- Express API: Render.
+- MongoDB: Atlas.
+- Images: Cloudinary optional.
+Document cookie/CORS configuration for the actual deployment topology. Do not claim deployment has succeeded unless verified.
+14. Validation, privacy and error handling
+- Validate request body, params and query on the backend.
+- Use predictable error response shapes and appropriate HTTP codes.
+- Do not expose stack traces, secrets, DB internals or password hashes.
+- Validate uploaded file MIME type and size; do not trust filename extensions.
+- Do not accept arbitrary user-supplied image URLs as trusted evidence.
+- Keep exact incident coordinates private from other citizens.
+- Citizens may see their own report location; authorized officers may see coordinates needed for response.
+- Avoid unnecessary personal data.
+- Add basic rate limits to authentication and incident submission.
+- Use Helmet and safe production cookie settings.
+- CORS must use the intended frontend origin; no wildcard with credentialed cookies.
+- Clearly distinguish demo data from live information.
+15. Testing requirements
+Keep testing proportionate but cover the important security and workflow paths.
+Authentication/RBAC
+- Citizen can register/login/logout.
+- Invalid credentials rejected.
+- Seeded officer can log in.
+- Unauthenticated users cannot access protected APIs.
+- Citizen cannot access officer endpoints.
+- Citizen cannot read another citizen's report by changing its ID.
+- Citizen cannot change role or set officer-only statuses.
+Incident workflow
+- Valid incident can be submitted and persisted.
+- Invalid fields rejected.
+- File type/size restrictions work.
+- Report appears in owner's My Reports.
+- Officer can review, verify or reject.
+- Invalid status transitions rejected.
+- Citizen sees updated status for own report.
+Recommendation/deployment
+- Unavailable and incompatible resources are excluded.
+- Haversine distance works for known coordinates.
+- Missing coordinates trigger fallback.
+- Officer can confirm deployment.
+- Resource cannot be assigned to two active deployments.
+- Resource and incident statuses remain consistent.
+UI and quality
+- Routes render without runtime errors.
+- Forms have labels and useful validation.
+- Loading/error/empty states work.
+- Role-specific navigation is correct.
+- Mobile and desktop layouts work.
+- Light/dark themes work.
+- Run frontend/backend lint, type checks and builds where configured. Report actual results only.
+16. Phased implementation plan
+Do not attempt all features in one giant change.
+Phase 0 — Inspect
+Inspect repository structure, scripts, routes, components, styles, aliases and installed dependencies. Identify whether app uses src/app or app. Review current /, /dashboard, layout, theme and toast setup. Report conflicts before editing.
+Phase 1 — Landing page and design foundation
+Implement / as a polished public landing page. Preserve existing setup. Build responsive navigation, hero, feature section, safety callout and footer. Run relevant checks.
+Phase 2 — UI shells
+Build citizen and officer dashboard shells and role-appropriate navigation. Temporary placeholders must be clearly identified; do not show fabricated live KPIs.
+Phase 3 — Backend/database
+Create a small Express TypeScript API in server/. Configure MongoDB/Mongoose, env validation, central error handling, CORS, Helmet and request validation. Add User, Incident, Resource and Deployment models. Add officer/resource seed script. Document startup.
+Phase 4 — Authentication/RBAC
+Implement citizen registration, login, logout and current-user endpoint. Implement officer login through seeded account. Add secure cookie handling, role middleware and ownership checks. Test permissions before building workflows.
+Phase 5 — Citizen incident workflow
+Implement form, image upload, location, MongoDB persistence, My Reports and report detail. Connect dashboard counts to API data. Verify the full citizen journey.
+Phase 6 — Officer workflow
+Implement officer queue, incident detail, review, verification/rejection and severity. Connect officer KPIs to API data. Verify citizens cannot invoke officer operations.
+Phase 7 — Map/resources/recommendations
+Add Leaflet map and demo markers. Implement tested Haversine utility and explainable capability/distance ranking. Add resource inventory and deployment confirmation. Test unavailable resources and duplicate assignment prevention.
+Phase 8 — Polish and deployment
+Add safety content and verified emergency information. Finish accessibility, themes and error/empty/loading states. Test the complete workflow. Run lint/type/build checks for frontend and backend. Prepare .env.example and deployment instructions. Deploy only with credentials and user approval.
+17. Code quality rules
+- Keep TypeScript strict and understandable; avoid any.
+- Follow actual repository naming and alias conventions.
+- Use Server Components by default; add "use client" only for interaction/browser APIs.
+- Keep pages thin and extract reusable components where useful.
+- Keep business logic in backend services, not duplicated in UI.
+- Use a small typed API client.
+- Avoid unnecessary global state libraries.
+- Check installed dependencies before adding packages.
+- Avoid animation dependencies without a concrete need.
+- Use semantic HTML, accessible labels, keyboard focus and correct buttons/links.
+- Handle loading, error, empty, success and disabled states.
+- Preserve unrelated working code.
+- Do not fake API success, authentication, deployments or notifications.
+- Do not describe simulated resources as real availability.
+- Do not claim authorities were notified.
+- Do not silently expand scope.
+18. Definition of done
+The mini-project is complete when this end-to-end demonstration works:
+1. Citizen registers and logs in.
+2. Citizen submits an incident with category, description, location and optional image.
+3. Incident is persisted in MongoDB and receives a report ID.
+4. Citizen sees it in My Reports.
+5. Officer logs in with a seeded account.
+6. Officer sees and reviews the report and evidence.
+7. Officer verifies or rejects it.
+8. Verified incident appears on the officer map.
+9. System recommends eligible available demo resources with distance and explanation.
+10. Officer confirms deployment.
+11. Resource becomes deployed/unavailable and incident status updates.
+12. Citizen sees the appropriate updated status.
+13. Unauthorized API access is rejected.
+The result must remain explainable and demonstrable as a 5th-semester mini-project. No live emergency integration, AI prediction or production dispatch claims.
+19. OpenCode operating instructions
+For every task:
+1. Read this file.
+2. Inspect relevant existing files before editing.
+3. Confirm assumptions from the actual repository; do not invent routes or dependencies.
+4. State a concise plan for the requested milestone.
+5. Make the smallest coherent change.
+6. Run relevant checks and fix regressions caused by the change.
+7. Report:
+   - Files inspected and changed.
+   - Dependencies added/removed and why.
+   - Commands/tests actually run and real outcomes.
+   - What is functional versus mocked/incomplete.
+   - Any setup/manual steps required from the user.
+If a requirement conflicts with the repository or materially increases scope, explain the trade-off and ask before proceeding.

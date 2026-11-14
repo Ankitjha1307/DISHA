@@ -59,12 +59,6 @@ const staggerContainer = {
   },
 };
 
-const scaleIn = {
-  initial: { opacity: 0, scale: 0.9 },
-  animate: { opacity: 1, scale: 1 },
-  transition: { duration: 0.5, ease: [0.25, 0.25, 0, 1] },
-};
-
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/40 text-foreground">
@@ -108,13 +102,14 @@ export default function Home() {
           >
             Features
           </motion.a>
-          <motion.a
-            href="#safety"
-            whileHover={{ y: -2 }}
-            className="transition-colors hover:text-primary"
-          >
-            Safety resources
-          </motion.a>
+          <motion.div whileHover={{ y: -2 }}>
+            <Link
+              href="/safety"
+              className="transition-colors hover:text-primary"
+            >
+              Safety guidance
+            </Link>
+          </motion.div>
         </div>
 
         <Button
@@ -122,8 +117,8 @@ export default function Home() {
           size="lg"
           className="rounded-full shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30"
         >
-          <Link href="/dashboard" className="gap-2">
-            Open portal <ArrowRight size={16} />
+          <Link href="/login" className="gap-2">
+            Sign in <ArrowRight size={16} />
           </Link>
         </Button>
       </motion.nav>
@@ -190,7 +185,7 @@ export default function Home() {
               size="lg"
               className="group h-14 rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-8 text-base font-semibold shadow-xl shadow-primary/25 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/30"
             >
-              <Link href="/dashboard">
+              <Link href="/login">
                 Enter citizen portal
                 <ArrowRight
                   size={18}
@@ -456,8 +451,8 @@ export default function Home() {
             size="lg"
             className="relative shrink-0 h-14 rounded-2xl bg-white px-8 text-base font-semibold text-slate-900 shadow-xl transition-all hover:bg-blue-50 hover:-translate-y-1"
           >
-            <Link href="/explore">
-              Explore DISHA <ArrowRight size={18} className="ml-2" />
+            <Link href="/safety">
+              Safety guidance <ArrowRight size={18} className="ml-2" />
             </Link>
           </Button>
         </motion.div>

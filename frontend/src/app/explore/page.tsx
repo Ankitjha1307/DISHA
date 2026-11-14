@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Flame,
   HeartPulse,
-  Home,
   MapPin,
   Phone,
   ShieldCheck,
@@ -179,8 +178,14 @@ export default function ExplorePage() {
           <Link href="/dashboard" className="transition-colors hover:text-primary">
             Dashboard
           </Link>
-          <Link href="/report" className="transition-colors hover:text-primary">
+          <Link
+            href="/report-incident"
+            className="transition-colors hover:text-primary"
+          >
             Report Incident
+          </Link>
+          <Link href="/safety" className="transition-colors hover:text-primary">
+            Safety
           </Link>
         </div>
 
@@ -245,7 +250,7 @@ export default function ExplorePage() {
 
           <motion.div variants={fadeInUp} className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg" className="rounded-2xl bg-gradient-to-r from-primary to-blue-600 px-6">
-              <Link href="/report">
+              <Link href="/report-incident">
                 Report an Incident <ArrowRight className="ml-2" size={18} />
               </Link>
             </Button>
@@ -366,7 +371,7 @@ export default function ExplorePage() {
                       <div>
                         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-red-600 dark:text-red-400">
                           <AlertTriangle size={16} />
-                          Don't
+                          Do not
                         </div>
                         <ul className="space-y-2 text-sm text-muted-foreground">
                           {guide.dontList.map((item) => (
@@ -399,16 +404,27 @@ export default function ExplorePage() {
             <div className="max-w-2xl">
               <p className="text-xs font-bold tracking-[0.2em] text-primary uppercase">Emergency contacts</p>
               <h2 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
-                Verified quick contacts
+                Verified emergency numbers
               </h2>
               <p className="mt-4 leading-7 text-muted-foreground">
-                These are widely used emergency numbers in India. DISHA is a prototype and does not directly call these
-                services — use them directly when in immediate danger.
+                These numbers are listed by the Uttar Pradesh Police UP-112
+                emergency contact page. DISHA is a prototype and does not
+                directly call these services — use them directly when in
+                immediate danger.{" "}
+                <a
+                  href="https://112.up.gov.in/emergencycontactinformation"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  View official source
+                </a>
+                .
               </p>
             </div>
             <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-background px-4 py-2 text-sm text-muted-foreground">
               <Phone size={16} className="text-primary" />
-              Available 24/7
+              Call directly
             </div>
           </motion.div>
 
@@ -477,7 +493,7 @@ export default function ExplorePage() {
               variant="outline"
               className="h-14 rounded-2xl border-white/40 bg-white/10 px-8 text-base font-semibold text-white backdrop-blur transition-all hover:bg-white/20 hover:-translate-y-1"
             >
-              <Link href="/report">Report an incident</Link>
+              <Link href="/report-incident">Report an incident</Link>
             </Button>
           </div>
         </motion.div>

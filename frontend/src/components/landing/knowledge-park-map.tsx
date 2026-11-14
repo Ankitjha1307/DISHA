@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Fix for default marker icons in Next.js
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -16,10 +15,6 @@ L.Icon.Default.mergeOptions({
 const knowledgeParkCenter: [number, number] = [28.4744, 77.504];
 
 export default function KnowledgeParkMap() {
-  useEffect(() => {
-    // Ensure map renders correctly
-  }, []);
-
   return (
     <MapContainer
       center={knowledgeParkCenter}
